@@ -1,0 +1,9 @@
+fastapi==0.110.3
+uvicorn[standard]==0.30.6
+bcrypt==4.2.0
+httpx # for use TestClient from fastapi
+pytest==8.3.2
+python-multipart # This is because OAuth2 uses "form data" for sending the username and password.
+python-jose[cryptography]
+pymongo[srv]==4.8.0
+pytz

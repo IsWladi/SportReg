@@ -1,0 +1,35 @@
+services:
+  db:
+    image: mongo:7.0.14-jammy
+    container_name: bd-sportreg-dev
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=myPassword123
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_sportreg:/data/db
+      - mongodb_config_sportreg:/data/configdb
+    networks:
+      - sportreg_net
+
+  api:
+    container_name: api-sportreg-dev
+    build: ./api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 80 --reload
+    volumes:
+      - ./api:/code/
+      - ./workouts/:/code/workouts
+    ports:
+      - "8000:80"
+
+    depends_on:
+      - db
+    networks:
+      - sportreg_net
+
+networks:
+  sportreg_net:
+volumes:
+  mongodb_sportreg:
+  mongodb_config_sportreg:
