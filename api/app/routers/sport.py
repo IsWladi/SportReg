@@ -31,14 +31,30 @@ async def insert_workout(db: db_dependency, current_user: str, work_out: Workout
     return {"message": "Workout inserted successfully.",
             "workout_id": str(response.inserted_id)}
 
-@router.get("/get/last/workout", status_code=200)
-async def get_last_workout(db: db_dependency, current_user: str):
+@router.get("/get/last/completed/workout", status_code=200)
+async def get_last_completed_workout(db: db_dependency, current_user: str):
+    """
+    Get the last completed workout for the current user
+    """
     users_collection = db[current_user]
-    last_workout = users_collection.find().sort("date", -1).limit(1)
+    last_workout = users_collection.find({"completed": True}).sort("date", -1).limit(1)
     return {"last_workout": json.loads(dumps(last_workout))}
+
+@router.get("/get/pending/workouts", status_code=200)
+async def get_pending_workouts(db: db_dependency, current_user: str):
+    """
+    Get all the pending workouts for the current user
+    """
+    users_collection = db[current_user]
+    pending_workouts = users_collection.find({"completed": False}, {"_id": 0}).sort("date", -1)
+    return {"pending_workouts": json.loads(dumps(pending_workouts))}
 
 @router.get("/get/workouts", status_code=200)
 async def get_workouts(db: db_dependency, current_user: str, format: str = "markdown", lang: str = "es"):
+    """
+    Get all the workouts for the current user in the specified format, either json or markdown, and in the specified language, either spanish or english.
+    If the format is markdown, a markdown file will be created within the /code/workouts/ directory.
+    """
     users_collection = db[current_user]
     workouts = users_collection.find().sort("date", -1)
     if format == "json":
