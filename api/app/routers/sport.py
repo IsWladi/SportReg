@@ -91,17 +91,26 @@ async def get_workouts(db: db_dependency, current_user: str, format: str = "mark
                     instruments = None
                 else:
                     for instrument in exercise['instruments']:
-                        if "weight" in instrument and "detail" not in instrument:
-                            instruments += f"{instrument['name']} ({instrument['weight']} kg)"
-                        elif "weight" in instrument and "detail" in instrument:
-                            instruments += f"{instrument['name']} ({instrument['weight']} kg, {instrument['detail']})"
-                        elif "weight" not in instrument and "detail" in instrument:
-                            instruments += f"{instrument['name']} ({instrument['detail']})"
-                        else: # no weight or detail
-                            instruments += f"{instrument['name']}"
+                        name = instrument.get('name', '')
+                        weight = instrument.get('weight')
+                        detail = instrument.get('detail')
+
+                        description = ""
+
+                        if weight is not None and detail:
+                            description = f"{name} ({weight} kg, {detail})"
+                        elif weight is not None:
+                            description = f"{name} ({weight} kg)"
+                        elif detail:
+                            description = f"{name} ({detail})"
+                        else:
+                            description = name
+
                         # add a comma if there are more instruments
                         if instrument != exercise['instruments'][-1]:
-                            instruments += ", "
+                            description += ", "
+
+                        instruments += description
 
                 readme_content += f"| {exercise['name']} | {instruments} | {exercise['sets']} | {exercise['reps']} | {exercise['rest_minutes']} | {exercise['comments']} |\n"
             readme_content += "\n"
