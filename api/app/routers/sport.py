@@ -88,7 +88,7 @@ async def get_workouts(db: db_dependency, current_user: str, format: str = "mark
                 # crear dato de instrumentos a partir de la lista de diccionarios
                 instruments = ""
                 if exercise['instruments'] is None:
-                    instruments = None
+                    instruments = "N/A"
                 else:
                     for instrument in exercise['instruments']:
                         name = instrument.get('name', '')
@@ -112,7 +112,7 @@ async def get_workouts(db: db_dependency, current_user: str, format: str = "mark
 
                         instruments += description
 
-                readme_content += f"| {exercise['name']} | {instruments} | {exercise['sets']} | {exercise['reps']} | {exercise['rest_minutes']} | {exercise['comments']} |\n"
+                readme_content += f"| {exercise['name']} | {instruments} | {exercise['sets']} | {exercise['reps']} | {exercise['rest_minutes']}m | {exercise['comments']} |\n"
             readme_content += "\n"
 
         # Replace all the "None" values with "N/A"
