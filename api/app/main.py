@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import sport, auth
+from .routers import sport, markdown, auth
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -17,6 +17,7 @@ app.add_middleware(
 #include routers
 app.include_router(auth.router)
 app.include_router(sport.router)
+app.include_router(markdown.router)
 
 @app.get("/")
 def get_state_prod_or_develop():
