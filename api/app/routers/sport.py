@@ -1,5 +1,8 @@
 from fastapi import HTTPException, APIRouter
 
+import datetime
+import pytz
+
 # import utilities for the mongo database
 from bson.json_util import dumps
 import json
@@ -44,3 +47,25 @@ async def get_pending_workouts(db: db_dependency, current_user: str):
     users_collection = db[current_user]
     pending_workouts = users_collection.find({"completed": False}, {"_id": 0}).sort("date", -1)
     return {"pending_workouts": json.loads(dumps(pending_workouts))}
+
+@router.post("/schedule/again/last/completed/workout", status_code=200)
+async def schedule_again_last_completed_workout(db: db_dependency, current_user: str, date: datetime.datetime = datetime.datetime.now(tz=pytz.timezone('America/Santiago')).strftime('%Y-%m-%d')):
+    """
+    Schedule again the last completed workout for the current user. the date is optional and by default is the current date. Also, the comments are not included in the scheduled workout.
+    """
+    users_collection = db[current_user]
+    last_workout = users_collection.find({"completed": True},{"date": 0, "completed": 0, "_id":0}).sort("date", -1).limit(1)
+    last_workout = json.loads(dumps(last_workout))[0]
+
+    scheduled_workout = {}
+    scheduled_workout["date"] = date
+    scheduled_workout["exercises"] = last_workout["exercises"]
+    # delete "comments" from the exercises
+    for exercise in scheduled_workout["exercises"]:
+        del exercise["comments"]
+    scheduled_workout["completed"] = False
+
+    response = users_collection.insert_one(scheduled_workout)
+    return {"message": "Workout scheduled successfully.",
+            "workout_id": str(response.inserted_id)}
+

@@ -91,6 +91,6 @@ async def get_workouts_markdown(db: db_dependency, current_user: str, lang: str 
         readme_content += "\n"
 
     # Replace all the "None" values with "N/A"
-    readme_content = readme_content.replace("None", "N/A")
+    readme_content = readme_content.replace("None", "N/A").replace("N/Am", "N/A")
 
     return Response(content=transform_string_to_markdown_bytes(readme_content), media_type="text/markdown")
