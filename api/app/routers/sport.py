@@ -62,7 +62,9 @@ async def schedule_again_last_completed_workout(db: db_dependency, current_user:
     scheduled_workout["exercises"] = last_workout["exercises"]
     # delete "comments" from the exercises
     for exercise in scheduled_workout["exercises"]:
-        del exercise["comments"]
+        # validate if the key exists
+        if "comments" in exercise:
+            del exercise["comments"]
     scheduled_workout["completed"] = False
 
     response = users_collection.insert_one(scheduled_workout)

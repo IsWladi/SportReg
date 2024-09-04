@@ -9,12 +9,6 @@ def get_db():
     if os.environ.get("PRODUCTION") == "True":
         uri = f"mongodb+srv://{DatabaseSettings.MONGO_USERNAME.value}:{DatabaseSettings.MONGO_PASSWORD.value}@{DatabaseSettings.MONGO_CLUSTER.value}/?retryWrites=true&w=majority&appName=ClusterSportReg"
         mongo_db = MongoClient(uri)
-        # Send a ping to confirm a successful connection
-        try:
-            mongo_db.admin.command('ping')
-            print("Pinged your deployment. You successfully connected to MongoDB!")
-        except Exception as e:
-            print(e)
 
     else:
         mongo_db = MongoClient("mongodb://bd-sportreg-dev:27017/",

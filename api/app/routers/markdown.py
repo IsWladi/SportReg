@@ -62,7 +62,9 @@ async def get_workouts_markdown(db: db_dependency, current_user: str, lang: str 
         for exercise in workout['exercises']:
             # crear dato de instrumentos a partir de la lista de diccionarios
             instruments = ""
-            if exercise['instruments'] is None:
+            if "comments" not in exercise or exercise['comments'] is None:
+                exercise['comments'] = "N/A"
+            if "instruments" not in exercise or exercise['instruments'] is None:
                 instruments = "N/A"
             else:
                 for instrument in exercise['instruments']:
