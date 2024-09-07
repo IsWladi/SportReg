@@ -34,3 +34,15 @@ class Workout(BaseModel):
         tz=pytz.timezone('America/Santiago'))
     exercises: list[Exercise]
     completed: Optional[bool] = False
+
+class WorkoutPlan(BaseModel):
+    day: int = 1 # 1 represents the first day of the plan (initial_date), 2 the second day, and so on
+    exercises: list[Exercise]
+    completed: Optional[bool] = False
+
+class Plan(BaseModel):
+    date: datetime.datetime = datetime.datetime.now(
+        tz=pytz.timezone('America/Santiago'))
+    plan: list[WorkoutPlan]
+    general_comments: Optional[str] = None
+

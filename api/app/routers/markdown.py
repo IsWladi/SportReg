@@ -1,5 +1,6 @@
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import Response
+from datetime import datetime, timedelta
 
 #import models
 from app.models.work_out import Workout
@@ -20,6 +21,57 @@ router = APIRouter(prefix="/api/markdown", tags=["MarkDown"])
 def transform_string_to_markdown_bytes(string_markdown: str):
     return string_markdown.encode("utf-8")
 
+def get_normal_workout(workout, lang, current_user):
+    readme_workout_content = ""
+
+    # get only the date dd/mm/yyyy
+    workout['date'] = workout['date'].strftime("%d/%m/%Y")
+
+    if workout["completed"]:
+        readme_workout_content += f"## {workout['date']} :heavy_check_mark: \n\n"
+    else:
+        readme_workout_content += f"## {workout['date']} :clock1: \n\n"
+    if lang == "es":
+        readme_workout_content += "| Ejercicio | Instrumentos | Series | Repeticiones | Descanso | Comentarios |\n"
+        readme_workout_content += "|-----------|-------------|--------|--------------|----------|-------------|\n"
+    elif lang == "en":
+        readme_workout_content += "| Exercise | Instruments | Sets | Reps | Rest | Comments |\n"
+        readme_workout_content += "|----------|-------------|------|------|------|----------|\n"
+
+    # add the exercises to the file
+    for exercise in workout['exercises']:
+        # crear dato de instrumentos a partir de la lista de diccionarios
+        instruments = ""
+        if "comments" not in exercise or exercise['comments'] is None:
+            exercise['comments'] = "N/A"
+        if "instruments" not in exercise or exercise['instruments'] is None:
+            instruments = "N/A"
+        else:
+            for instrument in exercise['instruments']:
+                name = instrument.get('name', '')
+                weight = instrument.get('weight')
+                detail = instrument.get('detail')
+
+                description = ""
+
+                if weight is not None and detail:
+                    description = f"{name} ({weight} kg, {detail})"
+                elif weight is not None:
+                    description = f"{name} ({weight} kg)"
+                elif detail:
+                    description = f"{name} ({detail})"
+                else:
+                    description = name
+
+                # add a comma if there are more instruments
+                if instrument != exercise['instruments'][-1]:
+                    description += ", "
+
+                instruments += description
+
+        readme_workout_content += f"| {exercise['name']} | {instruments} | {exercise['sets']} | {exercise['reps']} | {exercise['rest_minutes']}m | {exercise['comments']} |\n"
+    return readme_workout_content
+
 @router.get("/get/workouts",
             responses = {
                 200: {
@@ -37,6 +89,8 @@ async def get_workouts_markdown(db: db_dependency, current_user: str, lang: str 
     if len(workouts) == 0:
         raise HTTPException(status_code=404, detail="No workouts found for this user")
 
+    readme_content = ""
+
     if lang == "es":
         readme_content = f"# Entrenamientos de {current_user}\n\n"
     elif lang == "en":
@@ -45,52 +99,30 @@ async def get_workouts_markdown(db: db_dependency, current_user: str, lang: str 
         raise HTTPException(status_code=400, detail="Invalid language. Use 'es' or 'en'")
 
     for workout in workouts:
-        # get only the date dd/mm/yyyy
-        workout['date'] = workout['date'].strftime("%d/%m/%Y")
-        if workout["completed"]:
-            readme_content += f"## {workout['date']} :heavy_check_mark: \n\n"
+        if "type" in workout:
+            if workout["type"] == "plan":
+
+                processed_workouts = []
+
+                for plan_workout in workout["plan"]:
+                    if plan_workout["day"] == 1:
+                        plan_workout["date"] = workout["date"]
+                    elif plan_workout["day"] > 1:
+                        plan_workout["date"] = workout["date"] + timedelta(days=plan_workout["day"] - 1)
+
+                    # delete "day" key
+                    del plan_workout["day"]
+                    processed_workouts.append(plan_workout)
+
+                # order workout["plan"] by "date", major to minor
+                processed_workouts.sort(key=lambda x: x["date"], reverse=True)
+
+                for plan_workout in processed_workouts:
+                    readme_content += get_normal_workout(plan_workout, lang, current_user)
+                    readme_content += "\n"
         else:
-            readme_content += f"## {workout['date']} :clock1: \n\n"
-        if lang == "es":
-            readme_content += "| Ejercicio | Instrumentos | Series | Repeticiones | Descanso | Comentarios |\n"
-            readme_content += "|-----------|-------------|--------|--------------|----------|-------------|\n"
-        elif lang == "en":
-            readme_content += "| Exercise | Instruments | Sets | Reps | Rest | Comments |\n"
-            readme_content += "|----------|-------------|------|------|------|----------|\n"
-
-        # add the exercises to the file
-        for exercise in workout['exercises']:
-            # crear dato de instrumentos a partir de la lista de diccionarios
-            instruments = ""
-            if "comments" not in exercise or exercise['comments'] is None:
-                exercise['comments'] = "N/A"
-            if "instruments" not in exercise or exercise['instruments'] is None:
-                instruments = "N/A"
-            else:
-                for instrument in exercise['instruments']:
-                    name = instrument.get('name', '')
-                    weight = instrument.get('weight')
-                    detail = instrument.get('detail')
-
-                    description = ""
-
-                    if weight is not None and detail:
-                        description = f"{name} ({weight} kg, {detail})"
-                    elif weight is not None:
-                        description = f"{name} ({weight} kg)"
-                    elif detail:
-                        description = f"{name} ({detail})"
-                    else:
-                        description = name
-
-                    # add a comma if there are more instruments
-                    if instrument != exercise['instruments'][-1]:
-                        description += ", "
-
-                    instruments += description
-
-            readme_content += f"| {exercise['name']} | {instruments} | {exercise['sets']} | {exercise['reps']} | {exercise['rest_minutes']}m | {exercise['comments']} |\n"
-        readme_content += "\n"
+            readme_content += get_normal_workout(workout, lang, current_user)
+            readme_content += "\n"
 
     # Replace all the "None" values with "N/A"
     readme_content = readme_content.replace("None", "N/A").replace("N/Am", "N/A")
