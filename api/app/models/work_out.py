@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from typing import Union, Optional
 import datetime
 import pytz
@@ -17,7 +17,7 @@ class Exercise(BaseModel):
     rest_minutes: str
     comments: Optional[str] = None
 
-    @validator('reps')
+    @field_validator('reps')
     def validate_repetitions(cls, v):
         if isinstance(v, int):
             if v < 0:
