@@ -9,7 +9,7 @@ from bson.json_util import dumps
 import json
 
 #import models
-from app.models.work_out import Workout, Plan
+from app.models.work_out import Workout
 
 # import the dependencies for validating the token
 from fastapi import Depends
@@ -22,7 +22,7 @@ from app.models.basic_auth_models import User
 auth_dependency = Annotated[User, Depends(get_current_user)] # for use: current_user: auth_dependency
 db_dependency = Annotated[MongoClient, Depends(get_db)] # for use: db: db_dependency
 
-router = APIRouter(prefix="/api/general", tags=["General"])
+router = APIRouter(prefix="/api/workouts", tags=["Workouts"])
 
 @router.post("/insert/workout", status_code=200)
 async def insert_workout(db: db_dependency, current_user: str, work_out: Workout):
@@ -31,14 +31,6 @@ async def insert_workout(db: db_dependency, current_user: str, work_out: Workout
     return {"message": "Workout inserted successfully.",
             "workout_id": str(response.inserted_id)}
 
-@router.post("/insert/workout/plan", status_code=200)
-async def insert_plan(db: db_dependency, current_user: str, plan: Plan):
-    users_collection = db[current_user] # get access to the "user" collection
-    plan = plan.model_dump() # convert the plan to a dictionary
-    plan["type"] = "plan" # add the type of the plan
-    response = users_collection.insert_one(plan) # insert the new plan
-    return {"message": "Plan inserted successfully.",
-            "plan_id": str(response.inserted_id)}
 
 @router.get("/get/last/completed/workout", status_code=200)
 async def get_last_completed_workout(db: db_dependency, current_user: str):
@@ -49,24 +41,6 @@ async def get_last_completed_workout(db: db_dependency, current_user: str):
     last_workout = users_collection.find({"completed": True}).sort("date", -1).limit(1)
     return {"last_workout": json.loads(dumps(last_workout))}
 
-@router.get("/get/last/completed/plan", status_code=200)
-async def get_last_completed_plan(db: db_dependency, current_user: str):
-    """
-    Get the last completed plan for the current user
-    """
-    users_collection = db[current_user]
-    plans = users_collection.find({"type": "plan"}).sort("date", -1)
-    completed_plans = []
-    for plan in plans:
-        completed = True
-        for plan_workout in plan["plan"]:
-            if plan_workout["completed"] == False:
-                completed = False
-                break
-        if completed:
-            return {"last_plan": json.loads(dumps(plan))}
-
-    return {"message": "There are no completed plans."}
 
 @router.get("/get/pending/workouts", status_code=200)
 async def get_pending_workouts(db: db_dependency, current_user: str):

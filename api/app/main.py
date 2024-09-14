@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import sport, markdown, auth
+from .routers import workouts, plans, markdown, auth
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -16,7 +16,8 @@ app.add_middleware(
 
 #include routers
 app.include_router(auth.router)
-app.include_router(sport.router)
+app.include_router(workouts.router)
+app.include_router(plans.router)
 app.include_router(markdown.router)
 
 @app.get("/")
