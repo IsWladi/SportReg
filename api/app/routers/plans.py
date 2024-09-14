@@ -20,6 +20,15 @@ from app.models.basic_auth_models import User
 auth_dependency = Annotated[User, Depends(get_current_user)] # for use: current_user: auth_dependency
 db_dependency = Annotated[MongoClient, Depends(get_db)] # for use: db: db_dependency
 
+import os
+import logging
+logger = None
+
+if os.environ.get("PRODUCTION") == "True":
+    logger = logging.getLogger("uvicorn.log_info")
+else:
+    logger = logging.getLogger("uvicorn.log")
+
 router = APIRouter(prefix="/api/plans", tags=["Plans"])
 
 @router.post("/insert/plan", status_code=200)
@@ -58,23 +67,32 @@ async def schedule_again_last_completed_plan(db: db_dependency, current_user: st
     Schedule again the last completed plan for the current user. the date by default is the current date. Also, the comments are not included in the scheduled plan.
     """
     users_collection = db[current_user]
-    last_plan = users_collection.find({"type": "plan"}).sort("date", -1).limit(1)
-    last_plan = json.loads(dumps(last_plan))[0]
+    plans = list(users_collection.find({"type": "plan"}).sort("date", -1).limit(10)) # limit the search for performance reasons
 
-    # validate if the last plan is completed
-    completed = True
-    for plan_workout in last_plan["plan"]:
-        if plan_workout["completed"] == False:
-            completed = False
+    # validate if there are completed plans
+    if len(plans) == 0:
+        raise HTTPException(status_code=404, detail="The user has no plans.")
+
+    # find the last completed plan
+    last_completed_plan = {}
+    has_completed_plan = False
+    for plan in plans:
+        completed = True
+        for plan_workout in plan["plan"]:
+            if plan_workout["completed"] == False:
+                completed = False
+                break
+        if completed:
+            last_completed_plan = plan
+            has_completed_plan = True
             break
-
-    if not completed:
-        raise HTTPException(status_code=400, detail="There are no completed plans.")
+    if not has_completed_plan:
+        raise HTTPException(status_code=404, detail="There are no completed plans.")
 
     # build the scheduled plan
     scheduled_plan = {}
     scheduled_plan["date"] = date
-    scheduled_plan["plan"] = last_plan["plan"]
+    scheduled_plan["plan"] = last_completed_plan["plan"]
     scheduled_plan["type"] = "plan"
 
     # delete "comments" from the exercises in the plan
