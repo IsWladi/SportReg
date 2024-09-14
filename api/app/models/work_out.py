@@ -31,7 +31,7 @@ class Exercise(BaseModel):
 
 class Workout(BaseModel):
     date: datetime.datetime = datetime.datetime.now(
-        tz=pytz.timezone('America/Santiago'))
+        tz=pytz.timezone('America/Santiago')).strftime('%Y-%m-%d')
     exercises: list[Exercise]
     completed: Optional[bool] = False
 
@@ -42,7 +42,7 @@ class WorkoutPlan(BaseModel):
 
 class Plan(BaseModel):
     date: datetime.datetime = datetime.datetime.now(
-        tz=pytz.timezone('America/Santiago'))
+        tz=pytz.timezone('America/Santiago')).strftime('%Y-%m-%d')
     plan: list[WorkoutPlan]
     general_comments: Optional[str] = None
 
