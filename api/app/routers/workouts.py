@@ -74,8 +74,12 @@ async def schedule_again_last_completed_workout(db: db_dependency, current_user:
     Schedule again the last completed workout for the current user. the date is optional and by default is the current date. Also, the comments are not included in the scheduled workout.
     """
     users_collection = db[current_user]
-    last_workout = users_collection.find({"completed": True},{"date": 0, "completed": 0, "_id":0}).sort("date", -1).limit(1)
-    last_workout = json.loads(dumps(last_workout))[0]
+    last_workout = list(users_collection.find({"completed": True},{"date": 0, "completed": 0, "_id":0}).sort("date", -1).limit(1))
+
+    if len(last_workout) == 0:
+        raise HTTPException(status_code=404, detail="There are no completed workouts")
+
+    last_workout = last_workout[0]
 
     scheduled_workout = {}
     scheduled_workout["date"] = date
