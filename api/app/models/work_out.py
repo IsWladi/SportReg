@@ -41,6 +41,7 @@ class WorkoutPlan(BaseModel):
     day: int = 1 # 1 represents the first day of the plan (initial_date), 2 the second day, and so on
     exercises: list[Exercise]
     completed: Optional[bool] = False
+    post_workout_comments: Optional[str] = None
 
 class Plan(BaseModel):
     date: datetime.datetime = datetime.datetime.now(

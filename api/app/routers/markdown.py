@@ -21,16 +21,22 @@ router = APIRouter(prefix="/api/markdown", tags=["MarkDown"])
 def transform_string_to_markdown_bytes(string_markdown: str):
     return string_markdown.encode("utf-8")
 
-def get_normal_workout(workout, lang, current_user):
+def get_normal_workout(workout, lang, current_user, type:str = "normal"):
     readme_workout_content = ""
 
     # get only the date dd/mm/yyyy
     workout['date'] = workout['date'].strftime("%d/%m/%Y")
 
     if workout["completed"]:
-        readme_workout_content += f"## {workout['date']} :heavy_check_mark: \n\n"
+        if type == "plan":
+            readme_workout_content += f"### {workout['date']} :heavy_check_mark: \n\n"
+        elif type == "normal":
+            readme_workout_content += f"## {workout['date']} :heavy_check_mark: \n\n"
     else:
-        readme_workout_content += f"## {workout['date']} :clock1: \n\n"
+        if type == "plan":
+            readme_workout_content += f"### {workout['date']} :clock1: \n\n"
+        elif type == "normal":
+            readme_workout_content += f"## {workout['date']} :clock1: \n\n"
     if lang == "es":
         readme_workout_content += "| Ejercicio | Instrumentos | Series | Repeticiones | Descanso | Instrucción | Comentarios |\n"
         readme_workout_content += "|-----------|-------------|--------|--------------|----------|----------|-------------|\n"
@@ -42,7 +48,7 @@ def get_normal_workout(workout, lang, current_user):
     for exercise in workout['exercises']:
         # crear dato de instrumentos a partir de la lista de diccionarios
         instruments = ""
-        if "comments" not in exercise or exercise['comments'] is None:
+        if "comments" not in exercise or exercise['comments'] is None or exercise['comments'] == "":
             exercise['comments'] = "N/A"
         if "instruction" not in exercise or exercise['instruction'] is None:
             exercise['instruction'] = "N/A"
@@ -72,6 +78,12 @@ def get_normal_workout(workout, lang, current_user):
                 instruments += description
 
         readme_workout_content += f"| {exercise['name']} | {instruments} | {exercise['sets']} | {exercise['reps']} | {exercise['rest_minutes']}m | {exercise['instruction']} | {exercise['comments']} |\n"
+    if "post_workout_comments" in workout and workout["post_workout_comments"] is not None:
+            if lang == "es":
+                readme_workout_content += f"\n**Comentarios post-entrenamiento:** {workout['post_workout_comments']}\n\n"
+            elif lang == "en":
+                readme_workout_content += f"\n**Post-workout comments:** {workout['post_workout_comments']}\n\n"
+
     return readme_workout_content
 
 @router.get("/get/workouts",
@@ -106,6 +118,25 @@ async def get_workouts_markdown(db: db_dependency, current_user: str, lang: str 
 
                 processed_workouts = []
 
+                if lang == "es":
+                    readme_content += f"## Plan\n\n"
+                    readme_content += f"**Fecha inicial:** {workout['date'].strftime('%d/%m/%y')}\n\n"
+                elif lang == "en":
+                    readme_content += f"## Plan\n\n"
+                    readme_content += f"**Initial date:** {workout['date'].strftime('%y/%m/%d')}\n\n"
+
+
+                if "general_instructions" in workout and workout["general_instructions"] is not None:
+                    if lang == "es":
+                        readme_content += f"**Instrucciones generales:** {workout['general_instructions']}\n\n"
+                    elif lang == "en":
+                        readme_content += f"**General instructions:** {workout['general_instructions']}\n\n"
+                if "post_plan_comments" in workout and workout["post_plan_comments"] is not None:
+                    if lang == "es":
+                        readme_content += f"**Comentarios post-plan:** {workout['post_plan_comments']}\n\n"
+                    elif lang == "en":
+                        readme_content += f"**Post-plan comments:** {workout['post_plan_comments']}\n\n"
+
                 for plan_workout in workout["plan"]:
                     if plan_workout["day"] == 1:
                         plan_workout["date"] = workout["date"]
@@ -120,7 +151,7 @@ async def get_workouts_markdown(db: db_dependency, current_user: str, lang: str 
                 processed_workouts.sort(key=lambda x: x["date"], reverse=True)
 
                 for plan_workout in processed_workouts:
-                    readme_content += get_normal_workout(plan_workout, lang, current_user)
+                    readme_content += get_normal_workout(plan_workout, lang, current_user, "plan")
                     readme_content += "\n"
         else:
             readme_content += get_normal_workout(workout, lang, current_user)
