@@ -28,15 +28,27 @@ def get_normal_workout(workout, lang, current_user, type:str = "normal"):
     workout['date'] = workout['date'].strftime("%d/%m/%Y")
 
     if workout["completed"]:
-        if type == "plan":
-            readme_workout_content += f"### {workout['date']} :heavy_check_mark: \n\n"
-        elif type == "normal":
-            readme_workout_content += f"## {workout['date']} :heavy_check_mark: \n\n"
+        if lang == "es":
+            if type == "plan":
+                readme_workout_content += f"### Dia #{workout['day']} {workout['date']} :heavy_check_mark: \n\n"
+            elif type == "normal":
+                readme_workout_content += f"## {workout['date']} :heavy_check_mark: \n\n"
+        elif lang == "en":
+            if type == "plan":
+                readme_workout_content += f"### Day #{workout['day']} {workout['date']} :heavy_check_mark: \n\n"
+            elif type == "normal":
+                readme_workout_content += f"## {workout['date']} :heavy_check_mark: \n\n"
     else:
-        if type == "plan":
-            readme_workout_content += f"### {workout['date']} :clock1: \n\n"
-        elif type == "normal":
-            readme_workout_content += f"## {workout['date']} :clock1: \n\n"
+        if lang == "es":
+            if type == "plan":
+                readme_workout_content += f"### Dia #{workout['day']} {workout['date']} :clock1: \n\n"
+            elif type == "normal":
+                readme_workout_content += f"## {workout['date']} :clock1: \n\n"
+        elif lang == "en":
+            if type == "plan":
+                readme_workout_content += f"### Day #{workout['day']} {workout['date']} :clock1: \n\n"
+            elif type == "normal":
+                readme_workout_content += f"## {workout['date']} :clock1: \n\n"
     if lang == "es":
         readme_workout_content += "| Ejercicio | Instrumentos | Series | Repeticiones | Descanso | Instrucción | Comentarios |\n"
         readme_workout_content += "|-----------|-------------|--------|--------------|----------|----------|-------------|\n"
@@ -143,8 +155,6 @@ async def get_workouts_markdown(db: db_dependency, current_user: str, lang: str 
                     elif plan_workout["day"] > 1:
                         plan_workout["date"] = workout["date"] + timedelta(days=plan_workout["day"] - 1)
 
-                    # delete "day" key
-                    del plan_workout["day"]
                     processed_workouts.append(plan_workout)
 
                 # order workout["plan"] by "date", major to minor
