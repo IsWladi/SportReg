@@ -15,6 +15,7 @@ class Exercise(BaseModel):
     reps: Union[int, str]
     instruments: Optional[list[Instrument]] = None
     rest_minutes: str
+    instruction: Optional[str] = None
     comments: Optional[str] = None
 
     @field_validator('reps')
@@ -34,6 +35,7 @@ class Workout(BaseModel):
         tz=pytz.timezone('America/Santiago')).strftime('%Y-%m-%d')
     exercises: list[Exercise]
     completed: Optional[bool] = False
+    post_workout_comments: Optional[str] = None
 
 class WorkoutPlan(BaseModel):
     day: int = 1 # 1 represents the first day of the plan (initial_date), 2 the second day, and so on
@@ -44,5 +46,6 @@ class Plan(BaseModel):
     date: datetime.datetime = datetime.datetime.now(
         tz=pytz.timezone('America/Santiago')).strftime('%Y-%m-%d')
     plan: list[WorkoutPlan]
-    general_comments: Optional[str] = None
+    general_instructions: Optional[str] = None
+    post_plan_comments: Optional[str] = None
 

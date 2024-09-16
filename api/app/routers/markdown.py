@@ -32,11 +32,11 @@ def get_normal_workout(workout, lang, current_user):
     else:
         readme_workout_content += f"## {workout['date']} :clock1: \n\n"
     if lang == "es":
-        readme_workout_content += "| Ejercicio | Instrumentos | Series | Repeticiones | Descanso | Comentarios |\n"
-        readme_workout_content += "|-----------|-------------|--------|--------------|----------|-------------|\n"
+        readme_workout_content += "| Ejercicio | Instrumentos | Series | Repeticiones | Descanso | Instrucción | Comentarios |\n"
+        readme_workout_content += "|-----------|-------------|--------|--------------|----------|----------|-------------|\n"
     elif lang == "en":
-        readme_workout_content += "| Exercise | Instruments | Sets | Reps | Rest | Comments |\n"
-        readme_workout_content += "|----------|-------------|------|------|------|----------|\n"
+        readme_workout_content += "| Exercise | Instruments | Sets | Reps | Rest | Instruction | Comments |\n"
+        readme_workout_content += "|----------|-------------|------|------|------|----------|----------|\n"
 
     # add the exercises to the file
     for exercise in workout['exercises']:
@@ -44,6 +44,8 @@ def get_normal_workout(workout, lang, current_user):
         instruments = ""
         if "comments" not in exercise or exercise['comments'] is None:
             exercise['comments'] = "N/A"
+        if "instruction" not in exercise or exercise['instruction'] is None:
+            exercise['instruction'] = "N/A"
         if "instruments" not in exercise or exercise['instruments'] is None:
             instruments = "N/A"
         else:
@@ -69,7 +71,7 @@ def get_normal_workout(workout, lang, current_user):
 
                 instruments += description
 
-        readme_workout_content += f"| {exercise['name']} | {instruments} | {exercise['sets']} | {exercise['reps']} | {exercise['rest_minutes']}m | {exercise['comments']} |\n"
+        readme_workout_content += f"| {exercise['name']} | {instruments} | {exercise['sets']} | {exercise['reps']} | {exercise['rest_minutes']}m | {exercise['instruction']} | {exercise['comments']} |\n"
     return readme_workout_content
 
 @router.get("/get/workouts",
