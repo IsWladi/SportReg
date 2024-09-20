@@ -95,13 +95,19 @@ async def schedule_again_last_completed_plan(db: db_dependency, current_user: st
     scheduled_plan["plan"] = last_completed_plan["plan"]
     scheduled_plan["type"] = "plan"
 
-    # delete "comments" from the exercises in the plan
+    i = 0
     for exercise in scheduled_plan["plan"]:
-        # validate if the key exists
-        if "comments" in exercise:
-            del exercise["comments"]
-        # set the completed key to False
         exercise["completed"] = False
+        exercise.pop("post_workout_comments", None)
+
+        j = 0
+        for workout in exercise["exercises"]:
+            workout.pop("comments", None)
+            exercise["exercises"][j] = workout
+            j+=1
+
+        scheduled_plan["plan"][i] = exercise
+        i+=1
 
     response = users_collection.insert_one(scheduled_plan)
     return {"message": "Plan scheduled successfully.",

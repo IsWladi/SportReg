@@ -2,7 +2,7 @@
 
 # Define the base URL and the output directory
 BASE_URL="http://localhost/api/markdown/get/workouts"
-OUTPUT_DIR="/mnt/c/Users/isaac/Entrenamientos"
+OUTPUT_DIR="/home/iswladi/Documents/Entrenamientos"
 
 # Create the output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
